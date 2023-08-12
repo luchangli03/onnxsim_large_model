@@ -1,6 +1,6 @@
 # onnxsim_large_model
 
-simplify large onnx model (>2GB)
+simplify >2GB large onnx model
 
 Can be used to simplify large onnx exported from stable diffusion or large language models.
 
