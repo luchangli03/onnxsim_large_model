@@ -82,12 +82,6 @@ def insert_onnx_nodes(graph, idx, new_nodes):
         graph.node.insert(idx, node)
 
 
-def add_onnx_inits(graph, new_inits):
-    del_init_names = [init.name for init in new_inits]
-    del_onnx_initializers(graph, del_init_names)
-    graph.initializer.extend(new_inits)
-
-
 def create_node_name(node_type):
     global NODE_INDICES
     if node_type not in NODE_INDICES:
