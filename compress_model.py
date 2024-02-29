@@ -7,7 +7,9 @@ from onnx_utils import del_onnx_initializers, insert_onnx_nodes, add_onnx_inits,
 
 SIZE_1MB = 1024 * 1024
 
-COMPRESS_NODE_TYPES = ["Conv", "Gemm", "MatMul"]
+COMPRESS_NODE_TYPES0 = ["Gather"]
+COMPRESS_NODE_TYPES1 = ["Conv", "Gemm", "MatMul"]
+COMPRESS_NODE_TYPES = COMPRESS_NODE_TYPES0 + COMPRESS_NODE_TYPES1
 CONST_OF_SHAPE_VALUE = 0.01
 
 DTYPE_BYTES = {
@@ -31,7 +33,10 @@ def compress_onnx_model(onnx_model, size_th_bytes=SIZE_1MB):
     for node in graph.node:
         if node.op_type not in COMPRESS_NODE_TYPES:
             continue
-        init_name = node.input[1]
+        if node.op_type in COMPRESS_NODE_TYPES0:
+            init_name = node.input[0]
+        elif node.op_type in COMPRESS_NODE_TYPES1:
+            init_name = node.input[1]
         if init_name not in name_2_init_map:
             continue
 
@@ -49,7 +54,7 @@ def compress_onnx_model(onnx_model, size_th_bytes=SIZE_1MB):
 
         global CONST_OF_SHAPE_VALUE
         node, shape_init = create_const_of_shape(
-            shape=shape, dtype=onnx.TensorProto.FLOAT, value=CONST_OF_SHAPE_VALUE, output_name=init.name)
+            shape=shape, dtype=dtype, value=CONST_OF_SHAPE_VALUE, output_name=init.name)
         CONST_OF_SHAPE_VALUE += 0.003
 
         removed_inits.append(init)
