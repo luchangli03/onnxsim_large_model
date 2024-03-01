@@ -15,6 +15,7 @@ CONST_OF_SHAPE_VALUE = 0.01
 DTYPE_BYTES = {
     onnx.TensorProto.FLOAT: 4,
     onnx.TensorProto.FLOAT16: 2,
+    onnx.TensorProto.BFLOAT16: 2,
 }
 
 
@@ -44,7 +45,7 @@ def compress_onnx_model(onnx_model, size_th_bytes=SIZE_1MB):
         dtype = get_onnx_tensor_proto_dtype(init)
         shape = get_onnx_tensor_proto_shape(init)
 
-        if dtype not in [onnx.TensorProto.FLOAT, onnx.TensorProto.FLOAT16]:
+        if dtype not in DTYPE_BYTES:
             continue
 
         dtype_bytes = DTYPE_BYTES[dtype]
