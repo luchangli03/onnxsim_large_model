@@ -2,8 +2,8 @@ import argparse
 import os
 import onnx
 from onnxsim import simplify
-from onnx_utils import set_onnx_input_shape
-from compress_model import SIZE_1MB, compress_onnx_model, uncompress_onnx_model
+from onnx_utils import set_onnx_input_shape, get_onnx_size_mb
+from compress_model import compress_onnx_model, uncompress_onnx_model
 
 
 def simplify_large_onnx(args):
@@ -17,26 +17,21 @@ def simplify_large_onnx(args):
     onnx_model = onnx.load(in_model_path)
     print(f"load model from {in_model_path} success")
 
-    size_th_bytes = args.size_th_kb * 1024
-
-    onnx_model, removed_inits = compress_onnx_model(onnx_model, size_th_bytes=size_th_bytes)
+    onnx_model, removed_inits = compress_onnx_model(onnx_model)
     print(f"compress model success")
 
     onnx_model = set_onnx_input_shape(onnx_model, args.input_shape)
-
-    tensor_size_threshold = f"{args.size_th_kb}KB"
     skipped_optimizers = args.skip.split(";")
-    onnx_model, check = simplify(onnx_model, skipped_optimizers=skipped_optimizers,
-                                 tensor_size_threshold=tensor_size_threshold)
+
+    onnx_model, check = simplify(onnx_model, skipped_optimizers=skipped_optimizers)
     if not check:
         raise ValueError(f"simplify compressed model {in_model_path} failed")
-
     print(f"simplify model success")
 
     onnx_model = uncompress_onnx_model(onnx_model, removed_inits)
     print(f"uncompress model success")
 
-    save_extern = True if args.save_extern_data else False
+    save_extern = args.save_extern_data or (get_onnx_size_mb(onnx_model) > 1.8 * 1024)
     onnx.save(onnx_model, out_model_path, save_as_external_data=save_extern)
 
 
@@ -46,15 +41,9 @@ if __name__ == "__main__":
     )
     parser.add_argument('-m', '--in_model_path', required=True, type=str)
     parser.add_argument('-o', '--out_model_path', required=False, type=str, default="")
-    parser.add_argument('--size_th_kb', required=False, type=int, default="1024")
-    parser.add_argument('--save_extern_data', required=False, type=int, default=1)
+    parser.add_argument('--save_extern_data', action='store_true')
     parser.add_argument('--input_shape', required=False, type=str, default="")
     parser.add_argument('--skip', required=False, type=str, default="")
-
     args = parser.parse_args()
-
-    if args.size_th_kb <= 1:
-        raise ValueError("invalid size_th")
-
     print(args.input_shape)
     simplify_large_onnx(args)

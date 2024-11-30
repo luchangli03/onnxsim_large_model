@@ -5,6 +5,27 @@ import numpy as np
 NODE_INDICES = {}
 
 
+DTYPE_BYTES = {
+    onnx.TensorProto.FLOAT: 4,
+    onnx.TensorProto.FLOAT16: 2,
+    onnx.TensorProto.BFLOAT16: 2,
+}
+
+
+def get_onnx_size_mb(onnx_model):
+    graph = onnx_model.graph
+    init_bytes = 0
+    for init in graph.initializer:
+        dtype = get_onnx_tensor_proto_dtype(init)
+        shape = get_onnx_tensor_proto_shape(init)
+        if dtype not in DTYPE_BYTES:
+            continue
+        init_bytes += DTYPE_BYTES[dtype] * shape_elem_num(shape)
+    graph_bytes_estimate = 400*1024*1024
+    init_bytes += graph_bytes_estimate
+    return init_bytes/1024/1024
+
+
 def set_onnx_input_shape(onnx_model, shape_cfg):
     if not shape_cfg:
         return onnx_model

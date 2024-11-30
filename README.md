@@ -24,10 +24,10 @@ This project also works for small onnx models and you can set --save_extern_data
 
 ## How this project works
 
-1. we replace large initializers in onnx models by const of shape nodes.
+1. we replace large initializers in onnx models by model inputs.
 
-2. then simplify onnx model and avoid simplifing these const of shape nodes.
-3. remove const of shape nodes and recover original initializers.
+2. then simplify the onnx model.
+3. recover original initializers and remove model inputs.
 
 ## Note
 
